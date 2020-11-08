@@ -1,9 +1,8 @@
-// import AppError from '../errors/AppError';
-
 import { getCustomRepository, getRepository } from 'typeorm';
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
 import TransactionsRepository from '../repositories/TransactionsRepository';
+import AppError from '../errors/AppError';
 
 interface Request {
   title: string;
@@ -34,6 +33,12 @@ class CreateTransactionService {
       category_id = categoryBd.id;
     }
     transaction.category_id = category_id;
+    if (
+      type === 'outcome' &&
+      (await transactionsRepository.getBalance()).total < value
+    ) {
+      throw new AppError('Saldo insuficiente');
+    }
     transaction = transactionsRepository.create(transaction);
 
     await transactionsRepository.save(transaction);
